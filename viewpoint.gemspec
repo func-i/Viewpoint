@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency  'nokogiri'
   s.add_runtime_dependency  'httpclient'
   s.add_runtime_dependency  'rubyntlm'
+  s.add_runtime_dependency  'logging'
   s.add_runtime_dependency  'icalendar', '>= 1.1.5'
   s.add_runtime_dependency  'mail', '>= 2.2.5'
 end
