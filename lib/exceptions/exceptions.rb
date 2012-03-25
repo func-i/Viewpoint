@@ -31,6 +31,12 @@ module Viewpoint
     class EwsSubscriptionTimeout < StandardError
     end
 
+    # Raised when the subscription_id passed to get_events is not found
+    class EwsSubscriptionNotFound < StandardError; end
+
+    # Raised when the watermark passed to get_events is invalid
+    class EwsErrorInvalidWatermark < StandardError; end
+
     # Represents a function in EWS that is not yet implemented in Viewpoint
     class EwsNotImplemented < StandardError
     end

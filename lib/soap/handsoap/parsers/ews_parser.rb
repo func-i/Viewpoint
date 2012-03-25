@@ -71,7 +71,16 @@ module Viewpoint
 
             @response_message.items = events
           else
-            raise EwsSubscriptionTimeout.new("#{@response_message.code}: #{@response_message.message}")
+            case @response_message.code
+            when "ErrorSubscriptionNotFound"
+              raise EwsSubscriptionNotFound.new("#{@response_message.code}: #{@response_message.message}")
+            when "ErrorExpiredSubscription"
+              raise EwsSubscriptionTimeout.new("#{@response_message.code}: #{@response_message.message}")
+            when "ErrorInvalidWatermark"
+              raise EwsErrorInvalidWatermark.new("#{@response_message.code}: #{@response_message.message}")
+            else
+              raise EwsError.new("#{@response_message.code}: #{@response_message.message}")
+            end            
           end
         end
 

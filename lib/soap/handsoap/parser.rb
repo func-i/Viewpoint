@@ -22,10 +22,10 @@ module Viewpoint
       module Parser
 
         def initialize(response)
-          # Unwrap SOAP Envelope
+          # Unwrap SOAP Envelope          
           @response = response
           @response_type = (response/"//#{NS_SOAP}:Body/*").first.node_name
-
+          
           rmsg = (response/'//*[@ResponseClass]').first
           @response_message = EwsSoapResponse.new(rmsg['ResponseClass'],
                                                   (rmsg/'m:ResponseCode/text()').first.to_s,

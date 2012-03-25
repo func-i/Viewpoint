@@ -70,7 +70,7 @@ module Viewpoint
           resp = (Viewpoint::EWS::EWS.instance).ews.find_folder( [normalize_id(root)], traversal, {:base_shape => shape} )
         else
           restr = {:restriction => 
-            {:is_equal_to => [{:field_uRI => {:field_uRI=>'folder:FolderClass'}}, {:field_uRI_or_constant=>{:constant => {:value => folder_type}}}]}
+              {:is_equal_to => [{:field_uRI => {:field_uRI=>'folder:FolderClass'}}, {:field_uRI_or_constant=>{:constant => {:value => folder_type}}}]}
           }
           resp = (Viewpoint::EWS::EWS.instance).ews.find_folder( [normalize_id(root)], traversal, {:base_shape => shape}, restr)
         end
@@ -118,8 +118,8 @@ module Viewpoint
         # For now the :field_uRI and :field_uRI_or_constant must be in an Array for Ruby 1.8.7 because Hashes
         # are not positional at insertion until 1.9
         restr = {:restriction =>
-          {:is_equal_to => 
-            [{:field_uRI => {:field_uRI=>'folder:DisplayName'}}, {:field_uRI_or_constant =>{:constant => {:value=>name}}}]}}
+            {:is_equal_to =>
+              [{:field_uRI => {:field_uRI=>'folder:DisplayName'}}, {:field_uRI_or_constant =>{:constant => {:value=>name}}}]}}
         resp = (Viewpoint::EWS::EWS.instance).ews.find_folder([root], opts[:traversal], {:base_shape => shape}, restr)
         if(resp.status == 'Success')
           raise EwsFolderNotFound, "The folder requested is invalid or unavailable" if resp.items.empty?
@@ -225,6 +225,24 @@ module Viewpoint
         end
       end
 
+      # Will attempt to resume the subscription with the given id and watermark
+      # If the subscription has expired or is not found it will resubscribe
+      # @return [Array] An array of Event items
+      # @params [String, String] A subscription_id and watermark
+      def resume_subscription_and_get_events(subscription_id = nil, watermark = nil)
+        begin
+          @subscription_id ||= subscription_id
+          @watermark ||= watermark
+          return get_events
+        rescue EwsSubscriptionNotFound, EwsSubscriptionTimeout, EwsErrorInvalidWatermark => e
+          @subscription_id, @watermark = nil, nil
+          subscribe
+          return get_events
+        rescue Exception => e
+          raise e
+        end
+      end
+
       # Checks a subscribed folder for events
       # @return [Array] An array of Event items
       # @todo check for subscription expiry
@@ -239,7 +257,7 @@ module Viewpoint
           else
             raise StandardError, "Folder <#{self.display_name}> not subscribed to. Issue a Folder#subscribe before checking events."
           end
-        rescue EwsSubscriptionTimeout => e
+        rescue Exception => e
           @subscription_id, @watermark = nil, nil
           raise e
         end
@@ -278,9 +296,9 @@ module Viewpoint
       # @param [DateTime] date_time the time to fetch Items since.
       def items_since(date_time, opts = {})
         restr = {:restriction =>
-          {:is_greater_than_or_equal_to => 
-            [{:field_uRI => {:field_uRI=>'item:DateTimeReceived'}},
-            {:field_uRI_or_constant =>{:constant => {:value=>date_time}}}]
+            {:is_greater_than_or_equal_to =>
+              [{:field_uRI => {:field_uRI=>'item:DateTimeReceived'}},
+              {:field_uRI_or_constant =>{:constant => {:value=>date_time}}}]
           }}
         find_items(opts.merge(restr))
       end
@@ -290,13 +308,13 @@ module Viewpoint
       # @param [DateTime] end_date the time to stop fetching Items from
       def items_between(start_date, end_date, opts={})
         restr = {:restriction =>  {:and => [
-          {:is_greater_than_or_equal_to => 
-            [{:field_uRI => {:field_uRI=>'item:DateTimeReceived'}},
-            {:field_uRI_or_constant=>{:constant => {:value =>start_date}}}]},
-          {:is_less_than_or_equal_to =>
-            [{:field_uRI => {:field_uRI=>'item:DateTimeReceived'}},
-            {:field_uRI_or_constant=>{:constant => {:value =>end_date}}}]}
-        ]}}
+              {:is_greater_than_or_equal_to =>
+                  [{:field_uRI => {:field_uRI=>'item:DateTimeReceived'}},
+                  {:field_uRI_or_constant=>{:constant => {:value =>start_date}}}]},
+              {:is_less_than_or_equal_to =>
+                  [{:field_uRI => {:field_uRI=>'item:DateTimeReceived'}},
+                  {:field_uRI_or_constant=>{:constant => {:value =>end_date}}}]}
+            ]}}
         find_items(opts.merge(restr))
       end
 
@@ -306,7 +324,7 @@ module Viewpoint
       # @param [String,nil] exclude_str A string to exclude from matches against the subject.  This is optional.
       def search_by_subject(match_str, exclude_str = nil)
         match = {:contains =>
-          [
+            [
             {:containment_mode => 'Substring'},
             {:containment_comparison => 'IgnoreCase'},
             {:field_uRI => {:field_uRI=>'item:Subject'}},
@@ -315,8 +333,8 @@ module Viewpoint
         }
         unless exclude_str.nil?
           excl = {:not =>
-            {:contains =>
-              [
+              {:contains =>
+                [
                 {:containment_mode => 'Substring'},
                 {:containment_comparison => 'IgnoreCase'},
                 {:field_uRI => {:field_uRI=>'item:Subject'}},
@@ -329,6 +347,84 @@ module Viewpoint
         end
 
         find_items({:restriction => match})
+      end
+
+      # Creates the nodes that will allow OR chaining on an array of fields.
+      # Accepts the array of fields to search and an array of keywords to apply to each field.
+      # Returns an array of ViewPoint Items
+      #
+      #     inbox = ViewPoint::EWS::Folder.get_folder_by_name('inbox')
+      #     inbox.items_fields_like_any(['message:From', 'message:ToRecipients'], ['Foo', 'Bar])
+      #
+      # @param [Array] Any of the fieldUri http://msdn.microsoft.com/en-us/library/aa494315(v=exchg.140).aspx
+      # @param [Array, Array] An array of fieldUri and an Array of keywords.
+      #
+      def items_fields_like_any(fields = [], keywords = [], opts = {})
+        if !keywords.empty? && !fields.empty?
+          match = {:or => []}
+          keywords.each do |word|
+            fields.each do |field|
+              match[:or] << {
+                :contains => [
+                  {:containment_mode => 'Substring'},
+                  {:containment_comparison => 'IgnoreCase'},
+                  {:field_uRI => {:field_uRI=>field}},
+                  {:constant => {:value => word}}
+                ]}
+            end
+          end
+          opts.merge!(:restriction => match)
+        end
+        find_items(opts)
+      end
+
+      # The items_since method uses :is_greater_than_or_equal_to and does not support
+      # finding items after a certain time.  A hack solution is to
+      # add 1 second to the date_time passed in.
+      # @param [DateTime] Takes a date and time, adds 1 second to it to find all items after that time.
+      # TODO: Not sure why this doesn't work with :is_greater_than, but it doesn't
+      def items_after(date_time, opts = {})
+        # => Needed to add 1.second to make it find items after
+        items_since(date_time + 1.second, opts)
+      end
+
+      # Combines the items_after with the ability to create the nodes that will allow OR chaining on an array of fields.
+      # Accepts the array of fields to search and an array of keywords to apply to each field.
+      # Returns an array of ViewPoint Items
+      #
+      #     inbox = ViewPoint::EWS::Folder.get_folder_by_name('inbox')
+      #     inbox.items_after_with_fields_like_any(DateTime.now - 1.hour, ['message:From', 'message:ToRecipients'], ['Foo', 'Bar])
+      #
+      def items_after_with_fields_like_any(date_time, fields = [], keywords = [], opts = {})
+        and_cond = {:and => []}
+        dt_cond = {:is_greater_than => [
+            {:field_uRI => {:field_uRI=>'item:DateTimeReceived'}},
+            {:field_uRI_or_constant =>{:constant => {:value=> date_time + 1.second}}}
+          ]}
+
+        if !keywords.empty? && !fields.empty?
+          match = {:or => []}
+          keywords.each do |word|
+            fields.each do |field|
+              match[:or] << {
+                :contains => [
+                  {:containment_mode => 'Substring'},
+                  {:containment_comparison => 'IgnoreCase'},
+                  {:field_uRI => {:field_uRI=>field}},
+                  {:constant => {:value => word}}
+                ]}
+            end
+          end
+
+          and_cond[:and] << dt_cond
+          and_cond[:and] << match
+
+          opts.merge!(:restriction => and_cond)
+        else
+          opts.merge!(:restriction => dt_cond)
+        end
+
+        find_items(opts)
       end
 
       # Get Item
