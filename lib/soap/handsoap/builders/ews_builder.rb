@@ -30,7 +30,7 @@ module Viewpoint
 
         def initialize(node, opts, &block)
           @node, @opts = node, opts
-          instance_eval(&block) if block_given?
+          instance_eval(&block) if block_given?          
         end
 
         # @see ExchangeWebService#subscribe

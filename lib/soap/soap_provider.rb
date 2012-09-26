@@ -51,7 +51,7 @@ module Viewpoint
         end
 
         def set_soap_resp(response)
-          @soap_response = response
+          @soap_response = response          
         end
 
       end # EwsSoapResponse
