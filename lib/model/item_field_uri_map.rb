@@ -158,6 +158,7 @@ module Viewpoint
         :assistant_name  => {:text => 'contacts:AssistantName', :writable => true},
         :birthday  => {:text => 'contacts:Birthday', :writable => true},
         :business_home_page  => {:text => 'contacts:BusinessHomePage', :writable => true},
+        :contacts_categories  => {:text => 'item:Categories', :writable => true, :field_name => :categories},
         :children  => {:text => 'contacts:Children', :writable => true},
         :companies  => {:text => 'contacts:Companies', :writable => true},
         :company_name  => {:text => 'contacts:CompanyName', :writable => true},

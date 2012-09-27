@@ -35,7 +35,7 @@ module Viewpoint
         item_shape = {:base_shape => shape.to_s.camelcase}
         shallow = item_shape[:base_shape] != 'AllProperties'
         resp = (Viewpoint::EWS::EWS.instance).ews.get_item([item_id], item_shape)
-        if(resp.status == 'Success')
+        if (resp.status == 'Success')
           item = resp.items.shift
           type = item.keys.first
           eval "#{type.to_s.camel_case}.new(item[type], :shallow => #{shallow})"
@@ -53,9 +53,9 @@ module Viewpoint
         conn = Viewpoint::EWS::EWS.instance
         b64attach = []
         attachments.each do |a|
-          b64attach << {:name => {:text =>(File.basename a.path)}, :content => {:text => Base64.encode64(a.read)}}
+          b64attach << {:name => {:text => (File.basename a.path)}, :content => {:text => Base64.encode64(a.read)}}
         end
-        resp = conn.ews.create_attachment(parent_id, b64attach) 
+        resp = conn.ews.create_attachment(parent_id, b64attach)
         (resp.status == 'Success') || (raise EwsError, "Could not create attachments. #{resp.code}: #{resp.message}")
         {:id => resp.items.first[:attachment_id][:root_item_id], :change_key => resp.items.first[:attachment_id][:root_item_change_key]}
       end
@@ -88,7 +88,7 @@ module Viewpoint
       # Set whether or not the body should be text-only or not
       # @param [Boolean] txt if true the body will return only text, otherwise it may be HTML or text.
       def text_only=(txt)
-        @text_only = ( txt == true ? true : false)
+        @text_only = (txt == true ? true : false)
       end
 
       # Save any pending updates that were manipulated via setter methods.
@@ -142,13 +142,13 @@ module Viewpoint
         changes = []
         type = self.class.name.split(/::/).last.ruby_case.to_sym
 
-        updates.each_pair do |k,v|
-          if(k == :preformatted)
+        updates.each_pair do |k, v|
+          if (k == :preformatted)
             changes += v
             next
           end
           raise EwsError, "Field (#{FIELD_URIS[k][:text]}) not writable by update." unless FIELD_URIS[k][:writable]
-          changes << {utype_map[update_type]=>[{:field_uRI => {:field_uRI=>FIELD_URIS[k][:text]}}, {type=>{k => v}}]}
+          changes << {utype_map[update_type] => [{:field_uRI => {:field_uRI => FIELD_URIS[k][:text]}}, {type => {k => v}}]}
         end
 
         changes
@@ -164,14 +164,14 @@ module Viewpoint
       # Mark this Item as read
       def mark_read!
         field = :is_read
-        update!({:set_item_field=>{:field_uRI=>{:field_uRI=>FIELD_URIS[field][:text]}, :message=>{field=>{:text=>"true"}}}})
+        update!({:set_item_field => {:field_uRI => {:field_uRI => FIELD_URIS[field][:text]}, :message => {field => {:text => "true"}}}})
         @is_read = true
       end
 
       # Mark this Item as unread
       def mark_unread!
         field = :is_read
-        update!({:set_item_field=>{:field_uRI=>{:field_uRI=>FIELD_URIS[field][:text]}, :message=>{field=>{:text=>"false"}}}})
+        update!({:set_item_field => {:field_uRI => {:field_uRI => FIELD_URIS[field][:text]}, :message => {field => {:text => "false"}}}})
         @is_read = false
         true
       end
@@ -180,7 +180,7 @@ module Viewpoint
         return true unless @shallow
         conn = Viewpoint::EWS::EWS.instance
         shape = {:base_shape => 'AllProperties', :body_type => (@text_only ? 'Text' : 'Best')}
-        resp = conn.ews.get_item([@item_id], shape) 
+        resp = conn.ews.get_item([@item_id], shape)
         resp = resp.items.shift
         @ews_item = resp[resp.keys.first]
         @shallow = false
@@ -196,7 +196,7 @@ module Viewpoint
       def move!(new_folder)
         new_folder = new_folder.id if new_folder.kind_of?(GenericFolder)
         resp = (Viewpoint::EWS::EWS.instance).ews.move_item([@item_id], new_folder)
-        if(resp.status == 'Success')
+        if (resp.status == 'Success')
           @item_id = resp.items.first[resp.items.first.keys.first][:item_id][:id]
           @change_key = resp.items.first[resp.items.first.keys.first][:item_id][:change_key]
           true
@@ -212,7 +212,7 @@ module Viewpoint
       def copy(new_folder)
         new_folder = new_folder.id if new_folder.kind_of?(GenericFolder)
         resp = (Viewpoint::EWS::EWS.instance).ews.copy_item([@item_id], new_folder)
-        if(resp.status == 'Success')
+        if (resp.status == 'Success')
           item = resp.items.first
           i_type = item.keys.first.to_s.camel_case
           return(eval "#{i_type}.new(item[item.keys.first])")
@@ -233,9 +233,9 @@ module Viewpoint
 
         deepen!
         @attachments = []
-        @ews_item[:attachments].each_pair do |k,v|
+        @ews_item[:attachments].each_pair do |k, v|
           # k should be file_attachment or item_attachment
-          if(v.is_a?(Hash))
+          if (v.is_a?(Hash))
             @attachments << (eval "#{k.to_s.camel_case}.new(v[:attachment_id][:id])")
           else
             v.each do |att|
@@ -244,6 +244,19 @@ module Viewpoint
           end
         end
         @attachments
+      end
+
+      # Return the Categories for this Item
+      # @return [Array,String] An array of String categories for this Item
+      def categories
+        # If we've already called this don't waste the time to process categories again.
+        return @categories if defined?(@categories)
+        @categories = []
+        if @ews_item[:categories][:string].is_a?(Array)
+          return @ews_item[:categories][:string].map{|a| a.values}.flatten
+        else
+          return @ews_item[:categories][:string].last
+        end
       end
 
       # Delete this item
@@ -277,7 +290,6 @@ module Viewpoint
       end
 
 
-
       private
 
       # @todo Handle:
@@ -285,7 +297,7 @@ module Viewpoint
       #   <ExtendedProperty/> <EffectiveRights/>
       def init_methods
         @parent_folder_id = @ews_item[:parent_folder_id][:id] if @ews_item[:parent_folder_id].is_a?(Hash)
-        @conversation_id  = @ews_item[:conversation_id][:id] if @ews_item[:conversation_id].is_a?(Hash)
+        @conversation_id = @ews_item[:conversation_id][:id] if @ews_item[:conversation_id].is_a?(Hash)
         @ews_methods << :item_id
         define_str_var :subject, :sensitivity, :body, :item_class, :importance, :in_reply_to, :unique_body
         define_str_var :display_cc, :display_to, :culture, :last_modified_name, :mime_content
@@ -299,7 +311,7 @@ module Viewpoint
       end
 
       def method_missing(m, *args, &block)
-        if(@shallow)
+        if (@shallow)
           deepen!
           send(m, *args, &block)
         else

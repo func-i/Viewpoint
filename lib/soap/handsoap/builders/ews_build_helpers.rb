@@ -30,13 +30,13 @@ module Viewpoint
         def folder_ids!(node, folder_ids, act_as=nil, element_name="#{NS_EWS_MESSAGES}:FolderIds")
           node.add(element_name) do |p|
             folder_ids.each do |id|
-              folder_id!(p,id,act_as)
+              folder_id!(p, id, act_as)
             end
           end
         end
 
         def folder_id!(node, folder_id, act_as = nil)
-          if( folder_id.is_a?(Symbol) )
+          if (folder_id.is_a?(Symbol))
             # @todo add change_key support to DistinguishedFolderId
             node.add("#{NS_EWS_TYPES}:DistinguishedFolderId") do |df|
               df.set_attr('Id', folder_id.to_s)
@@ -79,7 +79,7 @@ module Viewpoint
         def item_ids!(node, item_ids)
           node.add("#{NS_EWS_MESSAGES}:ItemIds") do |ids|
             item_ids.each do |id|
-              item_id!(ids,id)
+              item_id!(ids, id)
             end
           end
         end
@@ -92,11 +92,11 @@ module Viewpoint
         # @option item_ids [String] :change_key The ChangeKey
         def item_id!(node, item_id, element_name="#{NS_EWS_TYPES}:ItemId")
           node.add(element_name) do |iid|
-            if(item_id.is_a?(String))
-              iid.set_attr('Id',item_id)
+            if (item_id.is_a?(String))
+              iid.set_attr('Id', item_id)
             else
-              iid.set_attr('Id',item_id[:id])
-              iid.set_attr('ChangeKey',item_id[:change_key])
+              iid.set_attr('Id', item_id[:id])
+              iid.set_attr('ChangeKey', item_id[:change_key])
             end
           end
         end
@@ -135,8 +135,8 @@ module Viewpoint
           node.add("#{NS_EWS_MESSAGES}:FolderShape") do |fshape|
             fshape.add("#{NS_EWS_TYPES}:BaseShape", folder_shape[:base_shape])
 
-            unless( folder_shape[:additional_properties].nil? )
-              unless( folder_shape[:additional_properties][:FieldURI].nil? )
+            unless (folder_shape[:additional_properties].nil?)
+              unless (folder_shape[:additional_properties][:FieldURI].nil?)
                 fshape.add("#{NS_EWS_TYPES}:AdditionalProperties") do |addprops|
                   folder_shape[:additional_properties][:FieldURI].each do |uri|
                     addprops.add("#{NS_EWS_TYPES}:FieldURI") { |furi| furi.set_attr('FieldURI', uri) }
@@ -155,11 +155,21 @@ module Viewpoint
             is.add("#{NS_EWS_TYPES}:BodyType", item_shape[:body_type]) if item_shape.has_key?(:body_type)
             is.add("#{NS_EWS_TYPES}:FilterHtmlContent", item_shape[:filter_html_content]) if item_shape.has_key?(:filter_html_content)
             is.add("#{NS_EWS_TYPES}:ConvertHtmlCodePageToUTF8", item_shape[:convert_html_code_page_to_utf8]) if item_shape.has_key?(:convert_html_code_page_to_utf8)
-            unless( item_shape[:additional_properties].nil? )
-              unless( item_shape[:additional_properties][:field_uRI].nil? )
-                is.add("#{NS_EWS_TYPES}:AdditionalProperties") do |addprops|
+            unless (item_shape[:additional_properties].nil?)
+              is.add("#{NS_EWS_TYPES}:AdditionalProperties") do |addprops|
+                unless (item_shape[:additional_properties][:field_uRI].nil?)
                   item_shape[:additional_properties][:field_uRI].each do |uri|
                     addprops.add("#{NS_EWS_TYPES}:FieldURI") { |furi| furi.set_attr('FieldURI', uri) }
+                  end
+                end
+
+                unless (item_shape[:additional_properties][:extended_field_uRI].nil?)
+                  item_shape[:additional_properties][:extended_field_uRI].each do |ext_uri|
+                    addprops.add("#{NS_EWS_TYPES}:ExtendedFieldURI") do |ext_furi|
+                      ext_furi.set_attr('PropertySetId', ext_uri[:property_set_id])
+                      ext_furi.set_attr('PropertyName', ext_uri[:property_name])
+                      ext_furi.set_attr('PropertyType', ext_uri[:property_type])
+                    end
                   end
                 end
               end
@@ -186,14 +196,14 @@ module Viewpoint
         # @param [Hash] item The item or items that will be added to the element in the parameter node
         # @todo Make sure and watch this method for new Item elements when EWS versions change.
         def message_item!(node, item)
-          order=[:mime_content,:item_id,:parent_folder_id,:item_class,:subject,:sensitivity,:body,:attachments,:date_time_received,
-            :size,:categories,:importance,:in_reply_to,:is_submitted,:is_draft,:is_from_me,:is_resend,:is_unmodified,
-            :internet_message_headers,:date_time_sent,:date_time_created,:response_objects,:reminder_due_by,:reminder_is_set,
-            :reminder_minutes_before_start,:display_cc,:display_to,:has_attachments,:extended_property,:culture,:sender,
-            :to_recipients,:cc_recipients,:bcc_recipients,:is_read_receipt_requested,:is_delivery_receipt_requested,
-            :conversation_index,:conversation_topic,:from,:internet_message_id,:is_read,:is_response_requested,:references,
-            :reply_to,:effective_rights,:received_by,:received_representing,:last_modified_name,:last_modified_time,
-            :is_associated,:web_client_read_form_query_string,:web_client_edit_form_query_string,:conversation_id,:unique_body]
+          order=[:mime_content, :item_id, :parent_folder_id, :item_class, :subject, :sensitivity, :body, :attachments, :date_time_received,
+                 :size, :categories, :importance, :in_reply_to, :is_submitted, :is_draft, :is_from_me, :is_resend, :is_unmodified,
+                 :internet_message_headers, :date_time_sent, :date_time_created, :response_objects, :reminder_due_by, :reminder_is_set,
+                 :reminder_minutes_before_start, :display_cc, :display_to, :has_attachments, :extended_property, :culture, :sender,
+                 :to_recipients, :cc_recipients, :bcc_recipients, :is_read_receipt_requested, :is_delivery_receipt_requested,
+                 :conversation_index, :conversation_topic, :from, :internet_message_id, :is_read, :is_response_requested, :references,
+                 :reply_to, :effective_rights, :received_by, :received_representing, :last_modified_name, :last_modified_time,
+                 :is_associated, :web_client_read_form_query_string, :web_client_edit_form_query_string, :conversation_id, :unique_body]
 
           node.add("#{NS_EWS_TYPES}:Message") do |msg|
             item!(msg, item, order)
@@ -209,60 +219,60 @@ module Viewpoint
         def calendar_item!(node, item)
           # For some reason MS thought it was a good idea to make order matter for Item creation.  This list is the current order
           # for Exchange 2003 and 2010
-          order=[:mime_content,:item_id,:parent_folder_id,:item_class,:subject,:sensitivity,:body,:attachments,:date_time_received,:size,
-            :categories,:in_reply_to,:is_submitted,:is_draft,:is_from_me,:is_resend,:is_unmodified,:internet_message_headers,
-            :date_time_sent,:date_time_created,:response_objects,:reminder_due_by,:reminder_is_set,:reminder_minutes_before_start,
-            :display_cc,:display_to,:has_attachments,:extended_property,:culture,:start,:end,:original_start,:is_all_day_event,
-            :legacy_free_busy_status,:location,:when,:is_meeting,:is_cancelled,:is_recurring,:meeting_request_was_sent,
-            :is_response_requested,:calendar_item_type,:my_response_type,:organizer,:required_attendees,:optional_attendees,
-            :resources,:conflicting_meeting_count,:adjacent_meeting_count,:conflicting_meetings,:adjacent_meetings,:duration,:time_zone,
-            :appointment_reply_time,:appointment_sequence_number,:appointment_state,:recurrence,:first_occurrence,:last_occurrence,
-            :modified_occurrences,:deleted_occurrences,:meeting_time_zone,:start_time_zone,:end_time_zone,:conference_type,
-            :allow_new_time_proposal,:is_online_meeting,:meeting_workspace_url,:net_show_url,:effective_rights,:last_modified_name,
-            :last_modified_time,:is_associated,:web_client_read_form_query_string,:web_client_edit_form_query_string,:conversation_id,:unique_body]
+          order=[:mime_content, :item_id, :parent_folder_id, :item_class, :subject, :sensitivity, :body, :attachments, :date_time_received, :size,
+                 :categories, :in_reply_to, :is_submitted, :is_draft, :is_from_me, :is_resend, :is_unmodified, :internet_message_headers,
+                 :date_time_sent, :date_time_created, :response_objects, :reminder_due_by, :reminder_is_set, :reminder_minutes_before_start,
+                 :display_cc, :display_to, :has_attachments, :extended_property, :culture, :start, :end, :original_start, :is_all_day_event,
+                 :legacy_free_busy_status, :location, :when, :is_meeting, :is_cancelled, :is_recurring, :meeting_request_was_sent,
+                 :is_response_requested, :calendar_item_type, :my_response_type, :organizer, :required_attendees, :optional_attendees,
+                 :resources, :conflicting_meeting_count, :adjacent_meeting_count, :conflicting_meetings, :adjacent_meetings, :duration, :time_zone,
+                 :appointment_reply_time, :appointment_sequence_number, :appointment_state, :recurrence, :first_occurrence, :last_occurrence,
+                 :modified_occurrences, :deleted_occurrences, :meeting_time_zone, :start_time_zone, :end_time_zone, :conference_type,
+                 :allow_new_time_proposal, :is_online_meeting, :meeting_workspace_url, :net_show_url, :effective_rights, :last_modified_name,
+                 :last_modified_time, :is_associated, :web_client_read_form_query_string, :web_client_edit_form_query_string, :conversation_id, :unique_body]
 
           node.add("#{NS_EWS_TYPES}:CalendarItem") do |msg|
             item!(msg, item, order)
           end
         end
-        
+
         # Creates a Contact Element structure.  It matters to Exchange which order Items are added in
         # so it loops through an order Array to make sure things are added appropriately.
         # @param [Element] node The <Items> element that is the parent to all of the elements that will
         #   be created from the items param
         # @param [Hash] item The item or items that will be added to the element in the parameter node
         # @todo Make sure and watch this method for new Item elements when EWS versions change.
-        def contact_item!(node,item)
-          order=[:mime_content,:item_id,:parent_folder_id,:item_class,:subject,:sensitivity,:body,:attachments,:date_time_received,:size,
-            :categories,:importance,:in_reply_to,:is_submitted,:is_draft,:is_from_me,:is_resend,:is_unmodified, :internet_message_headers,
-            :date_time_sent,:date_time_created,:response_objects,:reminder_due_by,:reminder_is_set,:reminder_minutes_before_start,
-            :display_cc,:display_to,:has_attachments,:extended_property,:culture,:effective_rights,:last_modified_name,:last_modified_time,
-            :is_associated,:web_client_read_form_query_string,:web_client_edit_form_query_string,:conversation_id,:unique_body,:file_as,
-            :file_as_mapping,:display_name,:given_name,:initials,:middle_name,:nickname,:complete_name,:company_name,:email_addresses,
-            :physical_addresses,:phone_numbers,:assistant_name,:birthday,:business_home_page,:children,:companies,:contact_source,
-            :department,:generation,:im_addresses,:job_title,:manager,:mileage,:office_location,:postal_address_index,:profession,
-            :spouse_name,:surname,:wedding_anniversary,:has_picture]
+        def contact_item!(node, item)
+          order=[:mime_content, :item_id, :parent_folder_id, :item_class, :subject, :sensitivity, :body, :attachments, :date_time_received, :size,
+                 :categories, :importance, :in_reply_to, :is_submitted, :is_draft, :is_from_me, :is_resend, :is_unmodified, :internet_message_headers,
+                 :date_time_sent, :date_time_created, :response_objects, :reminder_due_by, :reminder_is_set, :reminder_minutes_before_start,
+                 :display_cc, :display_to, :has_attachments, :extended_property, :culture, :effective_rights, :last_modified_name, :last_modified_time,
+                 :is_associated, :web_client_read_form_query_string, :web_client_edit_form_query_string, :conversation_id, :unique_body, :file_as,
+                 :file_as_mapping, :display_name, :given_name, :initials, :middle_name, :nickname, :complete_name, :company_name, :email_addresses,
+                 :physical_addresses, :phone_numbers, :assistant_name, :birthday, :business_home_page, :children, :companies, :contact_source,
+                 :department, :generation, :im_addresses, :job_title, :manager, :mileage, :office_location, :postal_address_index, :profession,
+                 :spouse_name, :surname, :wedding_anniversary, :has_picture]
 
           node.add("#{NS_EWS_TYPES}:Contact") do |msg|
             item!(msg, item, order)
           end
         end
-        
+
         # Creates a Task Element structure.  It matters to Exchange which order Items are added in
         # so it loops through an order Array to make sure things are added appropriately.
         # @param [Element] node The <Items> element that is the parent to all of the elements that will
         #   be created from the items param
         # @param [Hash] item The item or items that will be added to the element in the parameter node
         # @todo Make sure and watch this method for new Item elements when EWS versions change.
-        def task_item!(node,item)
-          order=[:mime_content,:item_id,:parent_folder_id,:item_class,:subject,:sensitivity,:body,:attachments,:date_time_received,
-            :size,:categories,:in_reply_to,:is_submitted,:is_draft,:is_from_me,:is_resend,:is_unmodified,:internet_message_headers,
-            :date_time_sent,:date_time_created,:response_objects,:reminder_due_by,:reminder_is_set,:reminder_minutes_before_start,
-            :display_cc,:display_to,:has_attachments,:extended_property,:culture,:actual_work,:assigned_time,:billing_information,
-            :change_count,:companies,:complete_date,:contacts,:delegation_state,:delegator,:due_date,:is_assignment_editable,
-            :is_complete,:is_recurring,:is_team_task,:mileage,:owner,:percent_complete,:recurrence,:start_date,:status,
-            :status_description,:total_work,:effective_rights,:last_modified_name,:last_modified_time,:is_associated,
-            :web_client_read_form_query_string,:web_client_edit_form_query_string,:conversation_id,:unique_body]
+        def task_item!(node, item)
+          order=[:mime_content, :item_id, :parent_folder_id, :item_class, :subject, :sensitivity, :body, :attachments, :date_time_received,
+                 :size, :categories, :in_reply_to, :is_submitted, :is_draft, :is_from_me, :is_resend, :is_unmodified, :internet_message_headers,
+                 :date_time_sent, :date_time_created, :response_objects, :reminder_due_by, :reminder_is_set, :reminder_minutes_before_start,
+                 :display_cc, :display_to, :has_attachments, :extended_property, :culture, :actual_work, :assigned_time, :billing_information,
+                 :change_count, :companies, :complete_date, :contacts, :delegation_state, :delegator, :due_date, :is_assignment_editable,
+                 :is_complete, :is_recurring, :is_team_task, :mileage, :owner, :percent_complete, :recurrence, :start_date, :status,
+                 :status_description, :total_work, :effective_rights, :last_modified_name, :last_modified_time, :is_associated,
+                 :web_client_read_form_query_string, :web_client_edit_form_query_string, :conversation_id, :unique_body]
 
           node.add("#{NS_EWS_TYPES}:Task") do |msg|
             item!(msg, item, order)
@@ -280,12 +290,12 @@ module Viewpoint
         #   the SOAP request.
         def item!(node, item, order)
           order.each do |id|
-            if(item[id])
-              if(item[id].is_a?(Hash))
+            if (item[id])
+              if (item[id].is_a?(Hash))
                 node.add("#{NS_EWS_TYPES}:#{id.to_s.camel_case}", item[id][:text]) do |it|
                   add_hierarchy!(it, item[id]) if item[id]
                 end
-              elsif(item[id].is_a?(Array))
+              elsif (item[id].is_a?(Array))
                 node.add("#{NS_EWS_TYPES}:#{id.to_s.camel_case}") do |it|
                   item[id].each do |ai|
                     add_hierarchy!(it, ai)
@@ -319,7 +329,7 @@ module Viewpoint
 
         def attachments!(node, files, items)
           # Order matters and ruby 1.8.x does not have ordered hashes.
-          order=[:name, :content] 
+          order=[:name, :content]
           node.add("#{NS_EWS_MESSAGES}:Attachments") do |att|
             files.each do |f|
               att.add("#{NS_EWS_TYPES}:FileAttachment") do |fatt|
@@ -350,9 +360,9 @@ module Viewpoint
         #     <middle>bottom</middle>
         #   </top>
         def add_hierarchy!(node, e_hash, prefix = NS_EWS_TYPES)
-          e_hash.each_pair do |k,v|
+          e_hash.each_pair do |k, v|
             if v.is_a? Hash
-              if(k == :sub_elements)
+              if (k == :sub_elements)
                 add_hierarchy!(node, v)
               else
                 node.add("#{prefix}:#{k.to_s.camel_case}", v[:text]) do |n|
@@ -360,7 +370,7 @@ module Viewpoint
                 end
               end
             elsif v.is_a? Array
-              if(k == :sub_elements)
+              if (k == :sub_elements)
                 v.each do |i|
                   add_hierarchy!(node, i)
                 end

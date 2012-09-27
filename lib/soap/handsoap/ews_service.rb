@@ -66,7 +66,7 @@ module Viewpoint
           doc.alias NS_EWS_TYPES, 'http://schemas.microsoft.com/exchange/services/2006/types'
           doc.alias NS_EWS_MESSAGES, 'http://schemas.microsoft.com/exchange/services/2006/messages'
           header = doc.find('Header')
-          header.add("#{NS_EWS_TYPES}:RequestServerVersion") { |rsv| rsv.set_attr('Version','Exchange2007_SP1') }
+          header.add("#{NS_EWS_TYPES}:RequestServerVersion") { |rsv| rsv.set_attr('Version','Exchange2010_SP2') }
         end
 
         # Adds knowledge of namespaces to the response object.  These have to be identical to the 

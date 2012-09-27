@@ -271,7 +271,10 @@ module Viewpoint
         unless item_shape.has_key?(:additional_properties) # Don't overwrite if specified by caller
           item_shape[:additional_properties] = {:field_uRI => ['item:ParentFolderId']}
         end
-        resp = (Viewpoint::EWS::EWS.instance).ews.find_item([@folder_id], 'Shallow', item_shape, opts)
+
+        traversal = opts.delete(:traversal)
+
+        resp = (Viewpoint::EWS::EWS.instance).ews.find_item([@folder_id], traversal || 'Shallow', item_shape, opts)
         if(resp.status == 'Success')
           parms = resp.items.shift
           items = []
