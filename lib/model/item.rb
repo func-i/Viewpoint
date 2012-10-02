@@ -255,7 +255,7 @@ module Viewpoint
         if @ews_item[:categories] && @ews_item[:categories][:string].is_a?(Array)
           return @ews_item[:categories][:string].map{|a| a.values}.flatten
         else
-          return @ews_item[:categories][:string].last
+          return [@ews_item[:categories][:string].values.first]
         end
       end
 
