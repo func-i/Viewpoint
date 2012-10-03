@@ -40,7 +40,7 @@ module Viewpoint
           end
         end
 
-        def self.set_auth(user,pass)
+        def self.set_auth(user, pass)
           @@user = user
           @@pass = pass
         end
@@ -66,7 +66,8 @@ module Viewpoint
           doc.alias NS_EWS_TYPES, 'http://schemas.microsoft.com/exchange/services/2006/types'
           doc.alias NS_EWS_MESSAGES, 'http://schemas.microsoft.com/exchange/services/2006/messages'
           header = doc.find('Header')
-          header.add("#{NS_EWS_TYPES}:RequestServerVersion") { |rsv| rsv.set_attr('Version','Exchange2010_SP2') }
+          #header.add("#{NS_EWS_TYPES}:RequestServerVersion") { |rsv| rsv.set_attr('Version', 'Exchange2007_SP1') }
+          header.add("#{NS_EWS_TYPES}:RequestServerVersion") { |rsv| rsv.set_attr('Version','Exchange2010_SP2 ') }
         end
 
         # Adds knowledge of namespaces to the response object.  These have to be identical to the 
@@ -91,12 +92,12 @@ module Viewpoint
 
         def on_http_error(response)
           case response.status
-          when 401
-            raise EwsLoginError, "Failed to login to EWS at #{uri}. Please check your credentials."
-          when 404
-            raise EwsError, "File not found (404): #{uri} Please check the endpoint URL. Body: #{response.body}"
-          else
-            raise EwsError, "Unknown error (#{response.status}): #{uri} : Body: #{response.body}"
+            when 401
+              raise EwsLoginError, "Failed to login to EWS at #{uri}. Please check your credentials."
+            when 404
+              raise EwsError, "File not found (404): #{uri} Please check the endpoint URL. Body: #{response.body}"
+            else
+              raise EwsError, "Unknown error (#{response.status}): #{uri} : Body: #{response.body}"
           end
         end
 
@@ -119,8 +120,8 @@ module Viewpoint
           action = "#{SOAP_ACTION_PREFIX}/ResolveNames"
           resp = invoke("#{NS_EWS_MESSAGES}:ResolveNames", action) do |root|
             build!(root) do
-              root.set_attr('ReturnFullContactData',full_contact_data)
-              root.add("#{NS_EWS_MESSAGES}:UnresolvedEntry",name)
+              root.set_attr('ReturnFullContactData', full_contact_data)
+              root.add("#{NS_EWS_MESSAGES}:UnresolvedEntry", name)
             end
           end
           parse!(resp)
@@ -193,9 +194,9 @@ module Viewpoint
               item_shape!(root, item_shape)
               query_strings = opts.delete(:query_string)
               restriction = opts.delete(:restriction)
-              if(opts.has_key?(:calendar_view))
+              if (opts.has_key?(:calendar_view))
                 cal_view = opts[:calendar_view]
-                cal_view.each_pair do |k,v|
+                cal_view.each_pair do |k, v|
                   cal_view[k] = v.to_s
                 end
               end
@@ -483,7 +484,7 @@ module Viewpoint
           end
           parse!(resp)
         end
-        
+
         # Operation is used to create task items
         # This is actually a CreateItem operation but they differ for different types
         # of Exchange objects so it is named appropriately here.
@@ -505,7 +506,7 @@ module Viewpoint
           end
           parse!(resp)
         end
-        
+
         # Operation is used to create contact items
         # This is actually a CreateItem operation but they differ for different types
         # of Exchange objects so it is named appropriately here.
@@ -578,8 +579,8 @@ module Viewpoint
           resp = invoke("#{NS_EWS_MESSAGES}:SendItem", action) do |root|
             build!(root) do
               root.set_attr('SaveItemToFolder', save_item)
-              item_ids!(root,item_ids)
-              saved_item_folder_id!(root,saved_item_folder) unless saved_item_folder.nil?
+              item_ids!(root, item_ids)
+              saved_item_folder_id!(root, saved_item_folder) unless saved_item_folder.nil?
             end
           end
           parse!(resp)
@@ -714,7 +715,7 @@ module Viewpoint
           end
           parse!(resp)
         end
-        
+
         # Updates delegate permissions on a principal's mailbox
         # @see http://msdn.microsoft.com/en-us/library/bb856529.aspx
         #
@@ -751,7 +752,7 @@ module Viewpoint
           action = "#{SOAP_ACTION_PREFIX}/GetUserOofSettings"
           resp = invoke("#{NS_EWS_MESSAGES}:GetUserOofSettingsRequest", action) do |root|
             build!(root) do
-              mailbox!(root,mailbox[:mailbox],NS_EWS_TYPES)
+              mailbox!(root, mailbox[:mailbox], NS_EWS_TYPES)
             end
           end
           parse!(resp)
@@ -777,7 +778,7 @@ module Viewpoint
 
         def parse!(response, opts = {})
           return response if @@raw_soap
-          raise EwsError, "Can't parse an empty response. Please check your endpoint." if(response.nil?)
+          raise EwsError, "Can't parse an empty response. Please check your endpoint." if (response.nil?)
           EwsParser.new(response).parse(opts)
         end
 
