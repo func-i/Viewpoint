@@ -252,11 +252,14 @@ module Viewpoint
         # If we've already called this don't waste the time to process categories again.
         return @categories if defined?(@categories)
         @categories = []
-        if @ews_item[:categories] && @ews_item[:categories][:string].is_a?(Array)
-          return @ews_item[:categories][:string].map{|a| a.values}.flatten
-        else
-          return [@ews_item[:categories][:string].values.first]
+        if @ews_item[:categories]
+          if @ews_item[:categories][:string].is_a?(Array)
+            @categories = @ews_item[:categories][:string].map { |a| a.values }.flatten
+          else
+            @categories = [@ews_item[:categories][:string].values.first]
+          end
         end
+        @categories
       end
 
       # Delete this item
